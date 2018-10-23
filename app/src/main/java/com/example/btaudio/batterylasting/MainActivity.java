@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +24,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static java.lang.Long.getLong;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
     private Runnable runnableBt;
     private Runnable runnableRefresh;
 
-    private long timeWhenStopped = 0;
+    private long timeWhenStopped;
+
 
     BluetoothProfile.ServiceListener mProfileListener;
 
@@ -241,7 +245,10 @@ public class MainActivity extends AppCompatActivity {
             //filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
             if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)) {
                 Toast.makeText(mContext,"ACTION_ACL_CONNECTED", Toast.LENGTH_SHORT).show();
+                SharedPreferences preferences = getSharedPreferences("PROBARTIEMPO", Context.MODE_PRIVATE);
+                timeWhenStopped = preferences.getLong("PROBARTIEMPO", SystemClock.elapsedRealtime() - timeWhenStopped);
                 simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
+   //             simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
                 simpleChronometer.start();
             }
             if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED)) {
@@ -254,7 +261,12 @@ public class MainActivity extends AppCompatActivity {
               //  timerTime.setBase(SystemClock.elapsedRealtime());
             //    simpleChronometer.setBase(SystemClock.elapsedRealtime());
                 simpleChronometer.stop();
+                SharedPreferences preferences = getSharedPreferences("PROBARTIEMPO", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = preferences.edit();
                 timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
+                editor.putLong("PROBARTIEMPO", timeWhenStopped);
+                editor.apply();
+//                timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
 
             }
         }
