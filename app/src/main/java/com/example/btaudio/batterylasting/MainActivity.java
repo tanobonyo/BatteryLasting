@@ -47,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
     private Runnable runnableBt;
     private Runnable runnableRefresh;
 
-    private long timeWhenStopped;
+    private long timeWhenStopped = 0;
+    private boolean needtostart = false;
 
 
     BluetoothProfile.ServiceListener mProfileListener;
@@ -111,12 +112,16 @@ public class MainActivity extends AppCompatActivity {
                                 if (myDevice.getName().equals(device.getName())) {
                                     myDevice.setConnected(true);
                                     myDevice.setTime(simpleChronometer);
-
+                                    myDevice.setElapsed(readPreferenceValue(myDevice.getAddress()) );
                                     lastBtDeviceConnected = myDevice;
-
+                                    if (needtostart == true) {
+                                        timeWhenStopped = readPreferenceValue(myDevice.getAddress());
+                                        simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
+                                        simpleChronometer.start();
+                                        needtostart = false;
+                                    }
                                     myBtDeviceAdapter.notifyDataSetChanged();
                                     break;
-
                                 }
                             }
                         }
@@ -132,9 +137,14 @@ public class MainActivity extends AppCompatActivity {
                                 if (myDevice.getName().equals(device.getName())) {
                                     myDevice.setConnected(true);
                                     myDevice.setTime(simpleChronometer);
-
+                                    myDevice.setElapsed(readPreferenceValue(myDevice.getAddress()) );
                                     lastBtDeviceConnected = myDevice;
-
+                                    if (needtostart == true) {
+                                        timeWhenStopped = readPreferenceValue(myDevice.getAddress());
+                                        simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
+                                        simpleChronometer.start();
+                                        needtostart = false;
+                                    }
                                     myBtDeviceAdapter.notifyDataSetChanged();
                                     break;
                                 }
@@ -161,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
+        savePreferenceValue(lastBtDeviceConnected.getAddress());
 
         unregisterReceiver(mBroadcastReceiver);
     }
@@ -183,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                     // super.onSaveInstanceState(savedInstanceState);
 
                     if (!pairedDevices.equals(device.getName())) {
-                        BtDevice newDevice = new BtDevice(device.getName(), device.getAddress());
+                        BtDevice newDevice = new BtDevice(device.getName(), device.getAddress(), readPreferenceValue(device.getAddress()));
                         if ((lastBtDeviceConnected != null) && (newDevice.equals(lastBtDeviceConnected)))
                             newDevice.setTime(simpleChronometer);
 
@@ -212,6 +224,19 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(mContext,"Bluetooth no habilitado", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    protected long readPreferenceValue(String name) {
+        SharedPreferences preferences = getSharedPreferences("SAVEVALUES", Context.MODE_PRIVATE);
+//        return preferences.getLong(name, SystemClock.elapsedRealtime() - timeWhenStopped);
+        return preferences.getLong(name, SystemClock.elapsedRealtime() - timeWhenStopped);
+    }
+
+    protected void savePreferenceValue(String name) {
+        SharedPreferences preferences = getSharedPreferences("SAVEVALUES", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putLong(name, timeWhenStopped);
+        editor.apply();
     }
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -245,11 +270,10 @@ public class MainActivity extends AppCompatActivity {
             //filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
             if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)) {
                 Toast.makeText(mContext,"ACTION_ACL_CONNECTED", Toast.LENGTH_SHORT).show();
-                SharedPreferences preferences = getSharedPreferences("PROBARTIEMPO", Context.MODE_PRIVATE);
-                timeWhenStopped = preferences.getLong("PROBARTIEMPO", SystemClock.elapsedRealtime() - timeWhenStopped);
-                simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
-   //             simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
-                simpleChronometer.start();
+                needtostart = true;
+//                timeWhenStopped = readPreferenceValue(lastBtDeviceConnected.getName());
+//                simpleChronometer.setBase(SystemClock.elapsedRealtime() - timeWhenStopped);
+//                simpleChronometer.start();
             }
             if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED)) {
                 Toast.makeText(mContext,"ACTION_ACL_DISCONNECT_REQUESTED", Toast.LENGTH_SHORT).show();
@@ -261,12 +285,12 @@ public class MainActivity extends AppCompatActivity {
               //  timerTime.setBase(SystemClock.elapsedRealtime());
             //    simpleChronometer.setBase(SystemClock.elapsedRealtime());
                 simpleChronometer.stop();
-                SharedPreferences preferences = getSharedPreferences("PROBARTIEMPO", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = preferences.edit();
                 timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
-                editor.putLong("PROBARTIEMPO", timeWhenStopped);
-                editor.apply();
-//                timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
+    //            SharedPreferences preferences = getSharedPreferences("SAVEVALUES", Context.MODE_PRIVATE);
+      //          SharedPreferences.Editor editor = preferences.edit();
+        //        editor.putLong("PRUEBA", timeWhenStopped);
+          //      editor.apply();
+                savePreferenceValue(lastBtDeviceConnected.getAddress());
 
             }
         }

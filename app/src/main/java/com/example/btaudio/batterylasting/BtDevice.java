@@ -9,11 +9,13 @@ public class BtDevice {
     private String address;
     private boolean connected;
     private Chronometer time;
+    private long elapsed;
 
-    public BtDevice(String name, String address) {
+    public BtDevice(String name, String address, long elapsed) {
         this.name= name;
         this.address = address;
         this.connected = false;
+        this.elapsed = elapsed;
     }
 
     public String getName(){
@@ -24,6 +26,8 @@ public class BtDevice {
         return this.address;
     }
 
+    public long getElapsed(){ return this.elapsed; }
+
     public boolean getConnected(){
         return this.connected;
     }
@@ -32,7 +36,7 @@ public class BtDevice {
         if (this.connected)
             return "Connected!!!";
         else
-            return "";
+            return "Disconnected";
     }
 
     public int getConnectedColor(){
@@ -53,13 +57,17 @@ public class BtDevice {
         this.connected = connected;
     }
 
+    public void setElapsed(long elapsed) {
+        this.elapsed = elapsed;
+    }
+
     public void setTime(Chronometer time) {
         this.time = time;
     }
 
     @Override
     public String toString() {
-        return "Name: " + name + ", Address: " + address + ", Status: " + connected + ", Time: " + time  ;
+        return "Name: " + name + ", Address: " + address + ", Status: " + connected + ", Time: " + time  + ", Elap: " + elapsed ;
     }
 
     @Override
