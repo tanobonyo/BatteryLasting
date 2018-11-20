@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
     private long timeWhenStopped = 0;
     private boolean needtostart = false;
 
-
     BluetoothProfile.ServiceListener mProfileListener;
 
     @Override
@@ -73,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
                 BtDevice objeto = (BtDevice) listView.getItemAtPosition(position);
                 Toast.makeText(mContext,objeto.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext,"Se resetea el contador", Toast.LENGTH_SHORT).show();
+                resetPreferenceValue(objeto.getAddress());
             }
         });
 
@@ -171,9 +172,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
-        savePreferenceValue(lastBtDeviceConnected.getAddress());
-
+        if (lastBtDeviceConnected != null) {
+            timeWhenStopped = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
+            savePreferenceValue(lastBtDeviceConnected.getAddress());
+        }
         unregisterReceiver(mBroadcastReceiver);
     }
 
@@ -239,6 +241,14 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
+    protected void resetPreferenceValue(String name){
+        SharedPreferences preferences = getSharedPreferences("SAVEVALUES", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putLong(name, 0);
+        editor.apply();
+        timeWhenStopped = 0; //Count reset and initialize chronometer
+        needtostart = true;
+    }
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
